@@ -1,0 +1,60 @@
+version: '3'
+
+volumes:
+  dbdata: {}
+
+services:
+
+  web:
+    restart: always
+    build:
+      context: .
+      dockerfile: ./compose/web/Dockerfile
+    volumes:
+      - .:/app
+    env_file:
+      - ./example.env
+    expose:
+      - "8000"
+    links:
+      - db:db
+    depends_on:
+      - db
+    command: /start.sh
+
+  db:
+    restart: always
+    image: postgres:latest
+    volumes:
+      - ./compose/db/initdb.sh:/docker-entrypoint-initdb.d/initdb.sh
+      - dbdata:/var/lib/postgresql
+    env_file:
+      - ./example.env
+    expose:
+      - "5432"
+
+  nginx:
+    restart: always
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - .:/app
+      - ./compose/nginx:/etc/nginx/conf.d/
+    links:
+      - web:web
+
+  test:
+    build:
+      context: .
+      dockerfile: ./compose/web/Dockerfile
+    volumes:
+      - .:/app
+      - ./compose/web/runtest.sh:/runtest.sh
+    env_file:
+      - ./example.env
+    links:
+      - db:db
+    depends_on:
+      - db
+    command: /runtest.sh
