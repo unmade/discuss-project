@@ -60,7 +60,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'discuss.urls'
+ROOT_URLCONF = 'discuss.urls.prod'
 
 TEMPLATES = [
     {
@@ -84,7 +84,7 @@ WSGI_APPLICATION = 'discuss.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 DATABASES = {
-    'default': env.db('DJANGO_DATABASE_URL', default=f'sqlite://./{ROOT_DIR.path("db.sqlite3")}'),
+    'default': env.db('DJANGO_DATABASE_URL', default=f'sqlite://./{ROOT_DIR.path("../db.sqlite3")}'),
 }
 
 

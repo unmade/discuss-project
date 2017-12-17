@@ -55,7 +55,7 @@ class Comment(MPTTModel):
     modified_at = models.DateTimeField(_('Date of modification'), auto_now=True)
     content = models.TextField(_('Content'), max_length=settings.COMMENT_CONTENT_MAX_LENGTH)
 
-    is_deleted = models.BooleanField(_('Is deleted'), default=False)
+    is_deleted = models.BooleanField(_('Is deleted'), default=False, db_index=True)
     is_edited = models.BooleanField(_('Is edited'), default=False)
 
     objects = TreeManager.from_queryset(CommentQuerySet)()
