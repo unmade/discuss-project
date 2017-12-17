@@ -1,15 +1,12 @@
 import json
 
-from django.dispatch import Signal, receiver
+from django.dispatch import receiver
 
 from core.redis import redis_cli
 from users.serializers import UserSerializer
+from . import comment_created, comment_deleted, comment_updated
 from .models import Comment, CommentHistory
 from .serializers import CommentSerializer
-
-comment_created = Signal(providing_args=['comment', 'user'])
-comment_updated = Signal(providing_args=['comment', 'user'])
-comment_deleted = Signal(providing_args=['comment', 'user'])
 
 
 def _log_comment_changes(action, comment, user):

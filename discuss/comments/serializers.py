@@ -6,6 +6,7 @@ from rest_framework import serializers
 
 from users.models import User
 from users.serializers import UserSerializer
+from . import comment_created, comment_updated
 from .models import Comment, CommentHistory
 
 
@@ -39,7 +40,6 @@ class CommentCreateUpdateSerializer(serializers.Serializer):
         return data
 
     def create(self, validated_data):
-        from .signals import comment_created
         author_data = validated_data.pop('user')
         username = author_data.pop('username')
         user, _ = User.objects.get_or_create(username=username, defaults=author_data)
@@ -51,7 +51,6 @@ class CommentCreateUpdateSerializer(serializers.Serializer):
         }
 
     def update(self, instance, validated_data):
-        from .signals import comment_updated
         instance.content = validated_data['comment']['content']
         author_data = validated_data.pop('user')
         username = author_data.pop('username')
@@ -75,7 +74,7 @@ class CommentHistorySerializer(serializers.ModelSerializer):
         fields = ['id', 'action', 'comment_id', 'content', 'created_at', 'user']
 
 
-class AuthorSerializer(serpy.DictSerializer):
+class FlatCommentAuthorSerializer(serpy.DictSerializer):
     username = serpy.StrField(attr='author__username')
     email = serpy.StrField(attr='author__email')
 
@@ -91,4 +90,4 @@ class FlatCommentSerializer(serpy.DictSerializer):
     author = serpy.MethodField()
 
     def get_author(self, obj):
-        return AuthorSerializer(obj).data
+        return FlatCommentAuthorSerializer(obj).data
