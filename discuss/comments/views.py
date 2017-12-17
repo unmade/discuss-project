@@ -76,18 +76,14 @@ class CommentDelete(generics.DestroyAPIView):
 
         try:
             data = json.loads(request.body)  # INFO: request.POST is empty on DELETE
-        except json.JSONDecodeError as e:
+        except json.JSONDecodeError:
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,
                 data={'error': _('JSON decode error')}
             )
 
         serializer = CommentDeleteSerializer(data=data)
-        if not serializer.is_valid():
-            return Response(
-                status=status.HTTP_400_BAD_REQUEST,
-                data=serializer.errors,
-            )
+        serializer.is_valid(raise_exception=True)
 
         username = serializer.data['user'].pop('username')
         user, is_created = User.objects.get_or_create(username=username, defaults=serializer.data['user'])
@@ -102,4 +98,4 @@ class CommentDelete(generics.DestroyAPIView):
 
 class CommentDownload(OutputMixin, CommentList):
     outputter_class = CommentOutputter
-    filename = 'comments'
+    filename_prefix = 'comments'

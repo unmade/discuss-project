@@ -3,6 +3,7 @@ from django.urls import reverse
 from rest_framework import status
 
 from comments.tests.conftest import CommentHistoryFactory, CommentFactory
+from users.models import User
 
 
 class TestActionList:
@@ -80,13 +81,15 @@ class TestToken:
         assert response.status_code == status.HTTP_200_OK
 
     @pytest.mark.django_db
-    def test_response_status_code_is_ok(self, client):
+    def test_create_user_if_does_not_exists(self, client):
         url = reverse('users:token')
-        response = client.post(url, data={'username': 'username', 'email': 'email'})
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        response = client.post(url, data={'username': 'username', 'email': 'email@me.com'})
+        assert response.status_code == status.HTTP_200_OK
+        assert User.objects.count() == 1
 
     @pytest.mark.django_db
-    def test_response_status_code_is_ok(self, client):
+    def test_not_all_data_provided(self, client):
         url = reverse('users:token')
         response = client.post(url, data={'username': 'username'})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json() == {'email': ['This field is required.']}
