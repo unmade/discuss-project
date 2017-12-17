@@ -4,6 +4,7 @@ from django.dispatch import receiver
 
 from core.redis import redis_cli
 from users.serializers import UserSerializer
+
 from . import comment_created, comment_deleted, comment_updated
 from .models import Comment, CommentHistory
 from .serializers import CommentSerializer

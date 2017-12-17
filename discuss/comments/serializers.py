@@ -6,6 +6,7 @@ from rest_framework import serializers
 
 from users.models import User
 from users.serializers import UserSerializer
+
 from . import comment_created, comment_updated
 from .models import Comment, CommentHistory
 

@@ -7,6 +7,7 @@ from rest_framework.response import Response
 
 from core.outputters.mixins import OutputMixin
 from users.models import User
+
 from .filters import CommentFilter
 from .models import Comment, CommentHistory
 from .outputters import CommentOutputter

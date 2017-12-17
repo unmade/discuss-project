@@ -2,7 +2,7 @@ import pytest
 from django.urls import reverse
 from rest_framework import status
 
-from comments.tests.conftest import CommentHistoryFactory, CommentFactory
+from comments.tests.conftest import CommentFactory, CommentHistoryFactory
 from users.models import User
 
 

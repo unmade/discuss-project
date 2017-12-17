@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 
 from comments.models import Comment, CommentHistory
 from comments.serializers import CommentHistorySerializer, FlatCommentSerializer
+
 from .models import User
 from .serializers import UserSerializer
 
