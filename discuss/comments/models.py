@@ -8,8 +8,6 @@ from mptt.models import MPTTModel
 
 from users.models import User
 
-# TODO: check indexes
-
 
 class CommentQuerySet(models.QuerySet):
 
@@ -63,7 +61,9 @@ class Comment(MPTTModel):
     class Meta:
         verbose_name = _('Comment')
         verbose_name_plural = _('Comments')
-        index_together = [['content_type_id', 'object_id']]
+        index_together = [
+            ['content_type_id', 'object_id', 'is_deleted'],
+        ]
 
     class MPTTMeta:
         order_insertion_by = ['created_at']
@@ -86,7 +86,7 @@ class CommentHistory(models.Model):
     comment = models.ForeignKey(Comment, verbose_name=_('Comment'), related_name='history', on_delete=models.CASCADE)
     content = models.TextField(_('Content'), blank=True)
     action = models.PositiveSmallIntegerField(_('Action'), choices=ACTION_CHOICES)
-    created_at = models.DateTimeField(_('Date of creation'), auto_now_add=True)
+    created_at = models.DateTimeField(_('Date of creation'), auto_now_add=True, db_index=True)
 
     class Meta:
         verbose_name = _('Comment history')
