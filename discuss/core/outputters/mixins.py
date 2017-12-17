@@ -5,9 +5,11 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import status
 from rest_framework.response import Response
 
+from .base import Outputter
+
 
 class OutputMixin(object):
-    outputter_class = None
+    outputter_class = Outputter
     default_output_format = 'xml'
     filename_prefix = ''
 

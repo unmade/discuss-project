@@ -12,7 +12,7 @@ class CommentAdmin(MPTTModelAdmin):
 
 
 @admin.register(CommentHistory)
-class CommentHistory(admin.ModelAdmin):
+class CommentHistoryAdmin(admin.ModelAdmin):
     raw_id_fields = ['user', 'comment']
     list_select_related = ['user']
     list_display = ['id', 'comment', 'created_at']
