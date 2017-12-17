@@ -68,3 +68,25 @@ class TestHistoryList:
 
         content = response.json()
         assert len(content['results']) == 5
+
+
+class TestToken:
+
+    @pytest.mark.django_db
+    def test_response_status_code_is_ok(self, client, user_factory):
+        user = user_factory.create()
+        url = reverse('users:token')
+        response = client.post(url, data={'username': user.username, 'email': user.email})
+        assert response.status_code == status.HTTP_200_OK
+
+    @pytest.mark.django_db
+    def test_response_status_code_is_ok(self, client):
+        url = reverse('users:token')
+        response = client.post(url, data={'username': 'username', 'email': 'email'})
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.django_db
+    def test_response_status_code_is_ok(self, client):
+        url = reverse('users:token')
+        response = client.post(url, data={'username': 'username'})
+        assert response.status_code == status.HTTP_400_BAD_REQUEST

@@ -7,7 +7,6 @@ from rest_framework import serializers
 from users.models import User
 from users.serializers import UserSerializer
 from .models import Comment, CommentHistory
-from .signals import comment_created, comment_updated
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -40,8 +39,10 @@ class CommentCreateUpdateSerializer(serializers.Serializer):
         return data
 
     def create(self, validated_data):
+        from .signals import comment_created
         author_data = validated_data.pop('user')
-        user, _ = User.objects.get_or_create(**author_data)
+        username = author_data.pop('username')
+        user, _ = User.objects.get_or_create(username=username, defaults=author_data)
         comment = Comment.objects.create(author=user, **validated_data['comment'])
         comment_created.send(sender=comment.__class__, comment=comment, user=user)
         return {
@@ -50,9 +51,11 @@ class CommentCreateUpdateSerializer(serializers.Serializer):
         }
 
     def update(self, instance, validated_data):
+        from .signals import comment_updated
         instance.content = validated_data['comment']['content']
         author_data = validated_data.pop('user')
-        user, _ = User.objects.get_or_create(**author_data)
+        username = author_data.pop('username')
+        user, _ = User.objects.get_or_create(username=username, defaults=author_data)
         comment_updated.send(sender=instance.__class__, comment=instance, user=user)
         return {
             'comment': instance,

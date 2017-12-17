@@ -1,12 +1,15 @@
 import json
 from datetime import datetime
+from unittest import mock
 
 import pytest
 import pytz
 from django.urls import reverse
+from mockredis import mock_strict_redis_client
 from rest_framework import status
 
 from comments.models import CommentHistory
+from core.redis import RedisClient
 
 
 class TestCommentList:
@@ -133,7 +136,8 @@ class TestCommentCreate:
         }
 
     @pytest.mark.django_db
-    def test_comment_create(self, client, comment_data):
+    @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
+    def test_comment_create(self, redis_mock, client, comment_data):
         response = client.post(self.url, data=json.dumps(comment_data), content_type='application/json')
         assert response.status_code == status.HTTP_201_CREATED
 
@@ -153,13 +157,26 @@ class TestCommentCreate:
         assert response.json() == {'comment': {'parent': ['Invalid pk "-1" - object does not exist.']}}
 
     @pytest.mark.django_db
+    @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
+    def test_create_reply_to_comment(self, redis_mock, client, comment_factory, comment_data):
+        comment = comment_factory.create(parent=None)
+        comment_data['comment'].update({
+            'content_type_id': comment.content_type_id,
+            'object_id': comment.object_id,
+            'parent': comment.pk
+        })
+
+        response = client.post(self.url, data=json.dumps(comment_data), content_type='application/json')
+
+        assert response.status_code == status.HTTP_201_CREATED
+
+    @pytest.mark.django_db
     @pytest.mark.parametrize(['content_type_id', 'object_id', 'expected_status'], [
-        (1, 1, status.HTTP_201_CREATED),
         (1, 10, status.HTTP_400_BAD_REQUEST),
         (10, 1, status.HTTP_400_BAD_REQUEST),
         (10, 10, status.HTTP_400_BAD_REQUEST),
     ])
-    def test_create_reply_to_comment(
+    def test_create_reply_to_comment_with_different_thread(
             self, client, comment_factory, comment_data, content_type_id, object_id, expected_status
     ):
         comment = comment_factory.create(parent=None)
@@ -173,7 +190,8 @@ class TestCommentCreate:
         assert response.status_code == expected_status
 
     @pytest.mark.django_db
-    def test_create_history_record_on_comment_create(self, client, comment_data):
+    @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
+    def test_create_history_record_on_comment_create(self, redis_mock, client, comment_data):
         response = client.post(self.url, data=json.dumps(comment_data), content_type='application/json')
         content = response.json()
 
@@ -183,6 +201,30 @@ class TestCommentCreate:
         assert history.action == CommentHistory.CREATED
         assert history.content == content['comment']['content']
         assert history.user.username == comment_data['user']['username']
+
+    @pytest.mark.django_db
+    @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
+    def test_send_notification_on_comment_create(self, redis_mock, client, comment_data):
+        client.post(self.url, data=json.dumps(comment_data), content_type='application/json')
+        assert redis_mock.called
+
+    @pytest.mark.django_db
+    @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
+    def test_same_user_can_create_comment_more_than_once(self, redis_mock, client, comment_data):
+        for _ in range(2):
+            response = client.post(self.url, data=json.dumps(comment_data), content_type='application/json')
+            assert response.status_code == status.HTTP_201_CREATED
+
+    @pytest.mark.django_db
+    @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
+    def test_ignore_user_email_if_user_already_exists(self, redis_mock, client, comment_data):
+        client.post(self.url, data=json.dumps(comment_data), content_type='application/json')
+
+        old_email = comment_data['user']['email']
+        comment_data['user']['email'] = 'another@mail.me'
+        response = client.post(self.url, data=json.dumps(comment_data), content_type='application/json')
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.json()['user']['email'] == old_email
 
 
 class TestCommentUpdate:
@@ -200,7 +242,8 @@ class TestCommentUpdate:
         }
 
     @pytest.mark.django_db
-    def test_comment_update(self, client, comment_factory, update_data):
+    @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
+    def test_comment_update(self, redis_mock, client, comment_factory, update_data):
         comment = comment_factory.create(parent=None)
 
         url = reverse('comments:update', kwargs={'pk': comment.pk})
@@ -221,7 +264,8 @@ class TestCommentUpdate:
         assert response.json() == {'non_field_errors': [f'`{key}` field is required']}
 
     @pytest.mark.django_db
-    def test_comment_update_updates_only_content(self, client, comment_factory):
+    @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
+    def test_comment_update_updates_only_content(self, redis_mock, client, comment_factory):
         comment = comment_factory.create(parent=None)
         url = reverse('comments:update', kwargs={'pk': comment.pk})
         data = {
@@ -251,7 +295,8 @@ class TestCommentUpdate:
         assert comment_data['author']['email'] == comment.author.email
 
     @pytest.mark.django_db
-    def test_create_history_record_on_comment_update(self, client, comment_factory, update_data):
+    @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
+    def test_create_history_record_on_comment_update(self, redis_mock, client, comment_factory, update_data):
         comment = comment_factory.create(parent=None)
 
         url = reverse('comments:update', kwargs={'pk': comment.pk})
@@ -266,6 +311,16 @@ class TestCommentUpdate:
         assert history.user.username == update_data['user']['username']
 
     @pytest.mark.django_db
+    @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
+    def test_send_notification_on_comment_update(self, redis_mock, client, comment_factory, update_data):
+        comment = comment_factory.create(parent=None)
+
+        url = reverse('comments:update', kwargs={'pk': comment.pk})
+        client.patch(url, data=json.dumps(update_data), content_type='application/json')
+
+        assert redis_mock.called
+
+    @pytest.mark.django_db
     def test_comment_update_put_is_not_allowed(self, client, comment_factory, update_data):
         comment = comment_factory.create(parent=None)
 
@@ -273,6 +328,31 @@ class TestCommentUpdate:
         response = client.put(url, data=json.dumps(update_data), content_type='application/json')
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+    @pytest.mark.django_db
+    @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
+    def test_same_user_can_update_comment_more_than_once(self, redis_mock, client, comment_factory, update_data):
+        for _ in range(2):
+            comment = comment_factory.create(parent=None)
+
+            url = reverse('comments:update', kwargs={'pk': comment.pk})
+            response = client.patch(url, data=json.dumps(update_data), content_type='application/json')
+            assert response.status_code == status.HTTP_200_OK
+
+    @pytest.mark.django_db
+    @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
+    def test_ignore_user_email_if_user_already_exists(self, redis_mock, client, comment_factory, update_data):
+        comment = comment_factory.create(parent=None)
+
+        url = reverse('comments:update', kwargs={'pk': comment.pk})
+        client.patch(url, data=json.dumps(update_data), content_type='application/json')
+
+        old_email = update_data['user']['email']
+        update_data['user']['email'] = 'another@mail.me'
+
+        response = client.patch(url, data=json.dumps(update_data), content_type='application/json')
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()['user']['email'] == old_email
 
 
 class TestCommentDelete:
@@ -287,7 +367,8 @@ class TestCommentDelete:
         }
 
     @pytest.mark.django_db
-    def test_comment_delete(self, client, comment_factory, user_data):
+    @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
+    def test_comment_delete(self, redis_mock, client, comment_factory, user_data):
         comment = comment_factory.create(parent=None)
 
         url = reverse('comments:delete', kwargs={'pk': comment.pk})
@@ -316,7 +397,8 @@ class TestCommentDelete:
         assert response.json() == {'user': ['This field is required.']}
 
     @pytest.mark.django_db
-    def test_comment_delete_do_not_delete_from_database(self, client, comment_factory, user_data):
+    @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
+    def test_comment_delete_do_not_delete_from_database(self, redis_mock, client, comment_factory, user_data):
         comment = comment_factory.create(parent=None)
         url = reverse('comments:delete', kwargs={'pk': comment.pk})
 
@@ -336,7 +418,8 @@ class TestCommentDelete:
         assert response.json() == {'error': 'Could not delete parent comment'}
 
     @pytest.mark.django_db
-    def test_create_history_record_on_comment_delete(self, client, comment_factory, user_data):
+    @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
+    def test_create_history_record_on_comment_delete(self, redis_mock, client, comment_factory, user_data):
         comment = comment_factory.create(parent=None)
 
         url = reverse('comments:delete', kwargs={'pk': comment.pk})
@@ -346,6 +429,42 @@ class TestCommentDelete:
         assert history.action == CommentHistory.DELETED
         assert history.content == comment.content
         assert history.user.username == user_data['user']['username']
+
+    @pytest.mark.django_db
+    @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
+    def test_send_notification_on_comment_delete(self, redis_mock, client, comment_factory, user_data):
+        comment = comment_factory.create(parent=None)
+
+        url = reverse('comments:delete', kwargs={'pk': comment.pk})
+        client.delete(url, data=json.dumps(user_data), content_type='application/json')
+
+        assert redis_mock.called
+
+    @pytest.mark.django_db
+    @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
+    def test_same_user_can_delete_comment_more_than_once(self, redis_mock, client, comment_factory, user_data):
+        for _ in range(2):
+            comment = comment_factory.create(parent=None)
+
+            url = reverse('comments:delete', kwargs={'pk': comment.pk})
+            response = client.delete(url, data=json.dumps(user_data), content_type='application/json')
+            assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    @pytest.mark.django_db
+    @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
+    def test_ignore_user_email_if_user_already_exists(self, redis_mock, client, comment_factory, user_data):
+        comment = comment_factory.create(parent=None)
+
+        url = reverse('comments:delete', kwargs={'pk': comment.pk})
+        response = client.delete(url, data=json.dumps(user_data), content_type='application/json')
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        user_data['user']['email'] = 'another@mail.me'
+
+        comment = comment_factory.create(parent=None)
+        url = reverse('comments:delete', kwargs={'pk': comment.pk})
+        response = client.delete(url, data=json.dumps(user_data), content_type='application/json')
+        assert response.status_code == status.HTTP_204_NO_CONTENT
 
 
 class TestCommentHistoryList:

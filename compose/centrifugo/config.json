@@ -1,0 +1,13 @@
+{
+  "secret": "centrifugosecret",
+  "port": 8090,
+  "namespaces": [
+    {
+      "name": "thread"
+    }
+  ],
+  "log_level": "warning",
+  "engine": "redis",
+  "redis_host": "redis",
+  "redis_api": true
+}

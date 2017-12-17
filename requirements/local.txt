@@ -1,5 +1,7 @@
 -r test.txt
 
 django-debug-toolbar==1.9.1
+requests==2.18.4
 
-
+# INFO: Library is still WIP, but it used only in dev for WS sanity check
+git+https://github.com/centrifugal/centrifuge-python.git

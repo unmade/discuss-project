@@ -84,8 +84,7 @@ WSGI_APPLICATION = 'discuss.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 DATABASES = {
-    # 'default': env.db('DJANGO_DATABASE_URL', default=f'sqlite://./{ROOT_DIR.path("db.sqlite3")}'),
-    'default': env.db('DJANGO_DATABASE_URL'),
+    'default': env.db('DJANGO_DATABASE_URL', default=f'sqlite://./{ROOT_DIR.path("db.sqlite3")}'),
 }
 
 
@@ -129,12 +128,18 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 
-COMMENT_CONTENT_MAX_LENGTH = 5000
-
-
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'core.pagination.StandardResultsSetPagination',
     'DEFAULT_FILTER_BACKENDS': (
         'django_filters.rest_framework.DjangoFilterBackend',
     ),
 }
+
+
+CENTRIFUGO_SECRET = env('CENTRIFUGO_SECRET')
+
+COMMENT_CONTENT_MAX_LENGTH = 5000
+
+REDIS_HOST = env('REDIS_HOST', default='redis')
+REDIS_PORT = env.int('REDIS_PORT', default=6379)
+REDIS_DB = env.int('REDIS_DB', default=0)

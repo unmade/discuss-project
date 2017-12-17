@@ -2,6 +2,7 @@ version: '3'
 
 volumes:
   dbdata: {}
+  redisdata: {}
 
 services:
 
@@ -18,6 +19,7 @@ services:
       - "8000"
     links:
       - db:db
+      - redis:redis
     depends_on:
       - db
     command: /start.sh
@@ -43,6 +45,7 @@ services:
       - ./compose/nginx:/etc/nginx/conf.d/
     links:
       - web:web
+      - centrifugo:centrifugo
 
   test:
     build:
@@ -58,3 +61,22 @@ services:
     depends_on:
       - db
     command: /runtest.sh
+
+  centrifugo:
+    restart: always
+    image: fzambia/centrifugo:latest
+    command: centrifugo -c config.json
+    expose:
+      - "8090"
+    links:
+      - redis:redis
+    volumes:
+      - ./compose/centrifugo/config.json:/centrifugo/config.json
+
+  redis:
+    restart: always
+    image: redis:latest
+    expose:
+      - "6379"
+    volumes:
+      - redisdata:/data
