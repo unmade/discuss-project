@@ -1,7 +1,7 @@
 from unittest import mock
 
 from django.conf import settings
-from mockredis import mock_strict_redis_client, MockRedis
+from mockredis import MockRedis, mock_strict_redis_client
 
 from core.redis import RedisClient
 

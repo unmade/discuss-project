@@ -1,8 +1,8 @@
 from django.conf import settings
 from django.db import models
 from django.db.models.functions import Cast
-from django.utils.translation import ugettext_lazy as _
 from mptt.fields import TreeForeignKey
+from django.utils.translation import ugettext_lazy as _
 from mptt.managers import TreeManager
 from mptt.models import MPTTModel
 

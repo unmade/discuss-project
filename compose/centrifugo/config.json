@@ -3,7 +3,9 @@
   "port": 8090,
   "namespaces": [
     {
-      "name": "thread"
+      "name": "thread",
+      "history_size": 10,
+      "history_lifetime": 30
     }
   ],
   "log_level": "warning",

@@ -43,13 +43,15 @@ async def run(username, token_url, ws_url, content_type_id, object_id):
     async def error_handler(**kwargs):
         print(f'Sub error: {kwargs}')
 
-    await client.subscribe(
+    channel = await client.subscribe(
         f'thread:{content_type_id}_{object_id}',
         on_message=message_handler,
         on_join=join_handler,
         on_leave=leave_handler,
         on_error=error_handler
     )
+
+    print('History:', await channel.history())
 
 
 if __name__ == '__main__':
