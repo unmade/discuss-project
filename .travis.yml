@@ -18,7 +18,7 @@ before_script:
 
 script:
   - docker-compose up -d db
-  - docker-compose run test; echo $?
+  - docker-compose run test; exit $?
 
 after_script:
   - docker-compose down
