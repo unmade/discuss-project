@@ -129,7 +129,7 @@ class TestCommentCreate:
                 'object_id': 1,
                 'content': 'Really good comment',
             },
-            'user': {
+            'auth_user': {
                 'email': 'email@example.com',
                 'username': 'user1234',
             },
@@ -142,7 +142,7 @@ class TestCommentCreate:
         assert response.status_code == status.HTTP_201_CREATED
 
     @pytest.mark.django_db
-    @pytest.mark.parametrize('key', ['comment', 'user'])
+    @pytest.mark.parametrize('key', ['comment', 'auth_user'])
     def test_comment_and_user_is_required(self, client, comment_data, key):
         comment_data.pop(key)
         response = client.post(self.url, data=json.dumps(comment_data), content_type='application/json')
@@ -200,7 +200,7 @@ class TestCommentCreate:
 
         assert history.action == CommentHistory.CREATED
         assert history.content == content['comment']['content']
-        assert history.user.username == comment_data['user']['username']
+        assert history.user.username == comment_data['auth_user']['username']
 
     @pytest.mark.django_db
     @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
@@ -220,11 +220,11 @@ class TestCommentCreate:
     def test_ignore_user_email_if_user_already_exists(self, redis_mock, client, comment_data):
         client.post(self.url, data=json.dumps(comment_data), content_type='application/json')
 
-        old_email = comment_data['user']['email']
-        comment_data['user']['email'] = 'another@mail.me'
+        old_email = comment_data['auth_user']['email']
+        comment_data['auth_user']['email'] = 'another@mail.me'
         response = client.post(self.url, data=json.dumps(comment_data), content_type='application/json')
         assert response.status_code == status.HTTP_201_CREATED
-        assert response.json()['user']['email'] == old_email
+        assert response.json()['auth_user']['email'] == old_email
 
 
 class TestCommentUpdate:
@@ -235,7 +235,7 @@ class TestCommentUpdate:
             'comment': {
                 'content': 'Edited!',
             },
-            'user': {
+            'auth_user': {
                 'email': 'example@email.com',
                 'username': 'user4321',
             },
@@ -252,7 +252,7 @@ class TestCommentUpdate:
         assert response.status_code == status.HTTP_200_OK
 
     @pytest.mark.django_db
-    @pytest.mark.parametrize('key', ['comment', 'user'])
+    @pytest.mark.parametrize('key', ['comment', 'auth_user'])
     def test_comment_and_user_is_required(self, client, comment_factory, update_data, key):
         update_data.pop(key)
         comment = comment_factory.create(parent=None)
@@ -278,7 +278,7 @@ class TestCommentUpdate:
                     'username': 'user4321',
                 },
             },
-            'user': {
+            'auth_user': {
                 'email': 'example@email.com',
                 'username': 'user4321',
             },
@@ -308,7 +308,7 @@ class TestCommentUpdate:
 
         assert history.action == CommentHistory.UPDATED
         assert history.content == update_data['comment']['content']
-        assert history.user.username == update_data['user']['username']
+        assert history.user.username == update_data['auth_user']['username']
 
     @pytest.mark.django_db
     @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
@@ -347,12 +347,12 @@ class TestCommentUpdate:
         url = reverse('comments:update', kwargs={'pk': comment.pk})
         client.patch(url, data=json.dumps(update_data), content_type='application/json')
 
-        old_email = update_data['user']['email']
-        update_data['user']['email'] = 'another@mail.me'
+        old_email = update_data['auth_user']['email']
+        update_data['auth_user']['email'] = 'another@mail.me'
 
         response = client.patch(url, data=json.dumps(update_data), content_type='application/json')
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()['user']['email'] == old_email
+        assert response.json()['auth_user']['email'] == old_email
 
 
 class TestCommentDelete:
@@ -360,7 +360,7 @@ class TestCommentDelete:
     @pytest.fixture
     def user_data(self):
         return {
-            'user': {
+            'auth_user': {
                 'email': 'example@email.com',
                 'username': 'user4321',
             }
@@ -394,7 +394,7 @@ class TestCommentDelete:
         response = client.delete(url, data=json.dumps({'content': '1'}), content_type='application/json')
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json() == {'user': ['This field is required.']}
+        assert response.json() == {'auth_user': ['This field is required.']}
 
     @pytest.mark.django_db
     @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
@@ -428,7 +428,7 @@ class TestCommentDelete:
         history = CommentHistory.objects.get(comment_id=comment.pk)
         assert history.action == CommentHistory.DELETED
         assert history.content == comment.content
-        assert history.user.username == user_data['user']['username']
+        assert history.user.username == user_data['auth_user']['username']
 
     @pytest.mark.django_db
     @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
@@ -459,7 +459,7 @@ class TestCommentDelete:
         response = client.delete(url, data=json.dumps(user_data), content_type='application/json')
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
-        user_data['user']['email'] = 'another@mail.me'
+        user_data['auth_user']['email'] = 'another@mail.me'
 
         comment = comment_factory.create(parent=None)
         url = reverse('comments:delete', kwargs={'pk': comment.pk})

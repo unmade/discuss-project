@@ -30,40 +30,40 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class CommentCreateUpdateSerializer(serializers.Serializer):
     comment = CommentSerializer()
-    user = UserSerializer()
+    auth_user = UserSerializer()
 
     def validate(self, data):
-        for field in ('comment', 'user'):
+        for field in ('comment', 'auth_user'):
             if field not in data:
                 raise serializers.ValidationError(_(f'`{field}` field is required'))
 
         return data
 
     def create(self, validated_data):
-        author_data = validated_data.pop('user')
+        author_data = validated_data.pop('auth_user')
         username = author_data.pop('username')
         user, _ = User.objects.get_or_create(username=username, defaults=author_data)
         comment = Comment.objects.create(author=user, **validated_data['comment'])
         comment_created.send(sender=comment.__class__, comment=comment, user=user)
         return {
             'comment': comment,
-            'user': user,
+            'auth_user': user,
         }
 
     def update(self, instance, validated_data):
         instance.content = validated_data['comment']['content']
-        author_data = validated_data.pop('user')
+        author_data = validated_data.pop('auth_user')
         username = author_data.pop('username')
         user, _ = User.objects.get_or_create(username=username, defaults=author_data)
         comment_updated.send(sender=instance.__class__, comment=instance, user=user)
         return {
             'comment': instance,
-            'user': user,
+            'auth_user': user,
         }
 
 
 class CommentDeleteSerializer(serializers.Serializer):
-    user = UserSerializer()
+    auth_user = UserSerializer()
 
 
 class CommentHistorySerializer(serializers.ModelSerializer):

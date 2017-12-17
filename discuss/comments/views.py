@@ -85,10 +85,12 @@ class CommentDelete(generics.DestroyAPIView):
         serializer = CommentDeleteSerializer(data=data)
         serializer.is_valid(raise_exception=True)
 
-        username = serializer.data['user'].pop('username')
-        user, is_created = User.objects.get_or_create(username=username, defaults=serializer.data['user'])
         self.perform_destroy(instance)
+
+        username = serializer.data['auth_user'].pop('username')
+        user, is_created = User.objects.get_or_create(username=username, defaults=serializer.data['auth_user'])
         comment_deleted.send(sender=instance.__class__, comment=instance, user=user)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def perform_destroy(self, instance):
