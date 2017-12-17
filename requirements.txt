@@ -1,0 +1,16 @@
+# TODO: разнести и зафиксировать зависимости
+# base
+Django==2.0
+django-mptt
+djangorestframework
+django-filter
+serpy
+
+
+# dev
+django-debug-toolbar
+pytest
+pytest-cov
+git+https://github.com/pytest-dev/pytest-django.git
+pytest-factoryboy
+factory-boy==2.8.1
