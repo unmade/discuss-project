@@ -1,0 +1,11 @@
+-r base.txt
+
+pytest==3.3.1
+pytest-cov==2.5.1
+pytest-factoryboy==1.3.1
+
+# Waiting for `django_assert_num_queries` in release
+git+https://github.com/pytest-dev/pytest-django.git
+
+# There is some bug in 2.9.*. See https://github.com/pytest-dev/pytest-factoryboy/issues/47
+factory-boy==2.8.1

@@ -1,0 +1,6 @@
+Django==2.0
+django-environ==0.4.4
+django-filter==1.1.0
+django-mptt==0.9.0
+djangorestframework==3.7.3
+serpy==0.3.1

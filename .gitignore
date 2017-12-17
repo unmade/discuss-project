@@ -1,3 +1,5 @@
 .cache
 *.db
+*.sqlite3
 .coverage
+coverage.xml
