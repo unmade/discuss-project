@@ -35,6 +35,10 @@ class CommentQuerySet(models.QuerySet):
         return self.filter(is_deleted=False)
 
     def count(self):
+        # INFO: This hack avoids unnecessary join when executing count.
+        # If columns to related table presented in values statement (`author__email`) orm creates query with join.
+        # In postgres9.4 count with join turns out to be performance problem.
+        # Postgres9.6 works fine without this hack.
         original_map = OrderedDict(self.query.alias_map)
         prevent_join = any(col.alias == User._meta.db_table for col in self.query.where.get_group_by_cols())
         if not prevent_join:
@@ -85,7 +89,6 @@ class Comment(MPTTModel):
         return f'{self.pk}'
 
 
-# TODO: rename to History?
 class CommentHistory(models.Model):
     CREATED = 0
     UPDATED = 1
