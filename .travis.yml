@@ -14,7 +14,7 @@ before_install:
   - sudo mv docker-compose /usr/local/bin
 
 before_script:
-  - docker-compose build db test
+  - docker-compose -f docker-compose.yml -f docker-compose.test.yml build db test
 
 script:
   - docker-compose -f docker-compose.yml -f docker-compose.test.yml run test; exit $?
