@@ -1,3 +1,5 @@
+# pylint: disable=import-error,no-member
+
 import debug_toolbar
 
 from .prod import *  # NOQA
