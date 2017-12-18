@@ -99,6 +99,6 @@ class CommentDelete(generics.DestroyAPIView):
         instance.save(update_fields=['is_deleted'])
 
 
-class CommentDownload(OutputMixin, CommentList):
+class CommentExport(OutputMixin, CommentList):
     outputter_class = CommentOutputter
     filename_prefix = 'comments'

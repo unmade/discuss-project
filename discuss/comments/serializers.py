@@ -53,6 +53,7 @@ class CommentCreateUpdateSerializer(serializers.Serializer):
 
     def update(self, instance, validated_data):
         instance.content = validated_data['comment']['content']
+        instance.save(update_fields=['content'])
         author_data = validated_data.pop('auth_user')
         username = author_data.pop('username')
         user, _ = User.objects.get_or_create(username=username, defaults=author_data)

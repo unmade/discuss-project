@@ -284,15 +284,14 @@ class TestCommentUpdate:
             },
         }
 
-        response = client.patch(url, data=json.dumps(data), content_type='application/json')
-        content = response.json()
-        comment_data = content['comment']
+        client.patch(url, data=json.dumps(data), content_type='application/json')
+        comment.refresh_from_db()
 
-        assert comment_data['content_type_id'] == 1
-        assert comment_data['object_id'] == 1
-        assert comment_data['content'] == 'Edited!Again'
-        assert comment_data['author']['username'] == comment.author.username
-        assert comment_data['author']['email'] == comment.author.email
+        assert comment.content_type_id == 1
+        assert comment.object_id == 1
+        assert comment.content == 'Edited!Again'
+        assert comment.author.username == comment.author.username
+        assert comment.author.email == comment.author.email
 
     @pytest.mark.django_db
     @mock.patch.object(RedisClient, 'get_client', return_value=mock_strict_redis_client())
@@ -503,13 +502,13 @@ class TestCommentHistoryList:
         assert len(content['results']) == 3
 
 
-class TestCommentDownload:
+class TestCommentExport:
 
     @pytest.mark.django_db
     def test_response_status_is_ok(self, client, comment_factory):
         comment_factory.create_batch(2, parent=None)
 
-        url = reverse('comments:download')
+        url = reverse('comments:export')
         response = client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
@@ -518,7 +517,7 @@ class TestCommentDownload:
 
     @pytest.mark.django_db
     def test_unsupported_format(self, client):
-        url = reverse('comments:download')
+        url = reverse('comments:export')
         response = client.get(url, {'output': 'pdf'})
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -529,7 +528,7 @@ class TestCommentDownload:
         comment_factory.create_batch(2, parent=None, created_at=datetime(2017, 1, 1, tzinfo=pytz.UTC))
         comment_factory.create_batch(2, parent=None, created_at=datetime(2017, 2, 2, tzinfo=pytz.UTC))
         comment_factory.create_batch(2, parent=None, created_at=datetime(2017, 3, 3, tzinfo=pytz.UTC))
-        url = reverse('comments:download')
+        url = reverse('comments:export')
         response = client.get(url, {'created_0': '2017-2-1', 'created_1': '2017-3-1'})
 
         assert response.status_code == status.HTTP_200_OK

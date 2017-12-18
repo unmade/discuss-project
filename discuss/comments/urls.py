@@ -7,7 +7,7 @@ app_name = 'comments'
 urlpatterns = [
     path('list/', views.CommentList.as_view(), name='list'),
 
-    path('list/download/', views.CommentDownload.as_view(), name='download'),
+    path('list/export/', views.CommentExport.as_view(), name='export'),
 
     path('<int:pk>/children/', views.CommentChildren.as_view(), name='children'),
     path('<int:pk>/history/', views.CommentHistoryList.as_view(), name='history'),
