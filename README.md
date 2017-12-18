@@ -10,6 +10,16 @@ It features:
 - real-time notification system
 
 
+## Table of contents
+
+* [QuickStart](#quickstart)
+* [API](#api)
+* [Development](#development)
+  * [Testing](#testing)
+  * [Extending available export formats](#extending-available-export-formats)
+* [Benchmark](#benchmark)
+
+
 ## QuickStart
 
 Clone repo and run:
@@ -82,6 +92,24 @@ class CommentOutputter(Outputter):
 ```
 
 As you can see, you should define generator which yields chunks of data.
+
+
+### Real-Time Notifications
+
+To test real-time notifications simply run:
+```
+$ python3 discuss/notifier.py
+
+Connected {'client_id': 'c8c96c8e-1a2b-488b-a444-46800799d54d'}
+History: []
+```
+
+After that you could create/update/delete comment and see real-time notifications:
+```
+Connected {'client_id': 'c8c96c8e-1a2b-488b-a444-46800799d54d'}
+History: []
+Message: {'uid': 'Nh1NDMpn1Ihu640wlF379o', 'channel': 'thread:1_1', 'data': {'comment': {'id': 100167, 'content_type_id': 1, 'object_id': 1, 'content': '12345', 'parent': None, 'created_at': '2017-12-18T22:44:39.635045Z', 'author': {'username': 'fdooch', 'email': 'fdooch@example.com'}}, 'user': {'username': 'fdooch', 'email': 'fdooch@example.com'}, 'action': 0}}
+```
 
 
 ## Benchmark
