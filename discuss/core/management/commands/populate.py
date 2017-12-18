@@ -1,5 +1,4 @@
 import random
-import time
 
 from django.core.management import BaseCommand
 
@@ -40,10 +39,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         users = UserFactory.create_batch(200)
 
-        for i in range(1):
-            content_type_id = random.randint(1, 2)
-            object_id = random.randint(1, 2)
+        for i in range(2):
+            content_type_id = random.randint(3, 5)
+            object_id = random.randint(3, 5)
 
             roots_comment_num = random.randint(20, 50)
-            for _ in roots_comment_num:
+            for _ in range(roots_comment_num):
                 create_comment_tree(content_type_id, object_id, users)

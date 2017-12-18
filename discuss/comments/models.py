@@ -1,6 +1,8 @@
+from collections import OrderedDict
+
 from django.conf import settings
 from django.db import models
-from django.db.models.functions import Cast
+from django.db.models.sql.datastructures import Join
 from django.utils.translation import ugettext_lazy as _
 from mptt.fields import TreeForeignKey
 from mptt.managers import TreeManager
@@ -14,9 +16,8 @@ class CommentQuerySet(models.QuerySet):
     def list_flat(self):
         return (
             self
-            .select_related('author')
             # INFO: convert to datetime is slow, so casting to char
-            .annotate(created_at_str=Cast('created_at', models.CharField()))
+            .extra({'created_at_str': "CAST(created_at as VARCHAR)"})
             .values(
                 'id',
                 'content',
@@ -32,6 +33,16 @@ class CommentQuerySet(models.QuerySet):
 
     def not_deleted(self):
         return self.filter(is_deleted=False)
+
+    def count(self):
+        original_map = OrderedDict(self.query.alias_map)
+        prevent_join = any(col.alias == User._meta.db_table for col in self.query.where.get_group_by_cols())
+        if not prevent_join:
+            self.query.alias_map = {k: v for k, v in self.query.alias_map.items() if not isinstance(v, Join)}
+        count = super().count()
+        self.query.alias_map = original_map
+
+        return count
 
 
 class Comment(MPTTModel):
@@ -63,6 +74,8 @@ class Comment(MPTTModel):
         verbose_name_plural = _('Comments')
         index_together = [
             ['content_type_id', 'object_id', 'is_deleted'],
+            ['content_type_id', 'object_id'],
+            ['tree_id', 'lft'],
         ]
 
     class MPTTMeta:
