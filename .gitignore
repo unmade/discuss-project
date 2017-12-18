@@ -3,3 +3,4 @@
 *.sqlite3
 .coverage
 coverage.xml
+.env

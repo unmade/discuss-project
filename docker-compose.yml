@@ -47,21 +47,6 @@ services:
       - web:web
       - centrifugo:centrifugo
 
-  test:
-    build:
-      context: .
-      dockerfile: ./compose/web/Dockerfile
-    volumes:
-      - .:/app
-      - ./compose/web/runtest.sh:/runtest.sh
-    env_file:
-      - ./example.env
-    links:
-      - db:db
-    depends_on:
-      - db
-    command: /runtest.sh
-
   centrifugo:
     restart: always
     image: fzambia/centrifugo:latest

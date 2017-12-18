@@ -17,8 +17,7 @@ before_script:
   - docker-compose build db test
 
 script:
-  - docker-compose up -d db
-  - docker-compose run test; exit $?
+  - docker-compose -f docker-compose.yml -f docker-compose.test.yml run test; exit $?
 
 after_script:
   - docker-compose down
