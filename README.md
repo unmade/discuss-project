@@ -14,8 +14,7 @@ It features:
 
 Clone repo and run:
 ```
-docker-compose build
-docker-compose up
+docker-compose up --build
 ```
 
 
@@ -83,3 +82,21 @@ class CommentOutputter(Outputter):
 ```
 
 As you can see, you should define generator which yields chunks of data.
+
+
+## Benchmark
+
+For benchmarking was used this [dump](https://yadi.sk/d/4CGWoVL23QjaoR)
+
+> To load dump download it and run:
+> ```
+> docker-compose up db
+> docker exec -i {DB_CONTAINER_ID} psql -U discuss -c 'CREATE DATABASE discuss_benchmark'
+> cat discuss_dump | docker exec -i {DB_CONTAINER_ID} psql -U postgres -d discuss_benchmark
+> ```
+> Don't forget to switch to this DB in your settings
+
+Test database contains `100166` comments.
+Depth of a tree of the most commented comment is `101` and number of descendants is `11409`
+
+See benchmark [results](docs/BENCHMARK.md)
