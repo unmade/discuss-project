@@ -1,0 +1,67 @@
+version: '3'
+
+volumes:
+  dbdata: {}
+  redisdata: {}
+
+services:
+
+  web:
+    restart: always
+    build:
+      context: .
+      dockerfile: ./compose/web/Dockerfile
+    volumes:
+      - .:/app
+    env_file:
+      - ./example.env
+    expose:
+      - "8000"
+    links:
+      - db:db
+      - redis:redis
+    depends_on:
+      - db
+    command: /start.sh
+
+  db:
+    restart: always
+    image: postgres:latest
+    volumes:
+      - ./compose/db/initdb.sh:/docker-entrypoint-initdb.d/initdb.sh
+      - dbdata:/var/lib/postgresql
+    env_file:
+      - ./example.env
+    expose:
+      - "5432"
+
+  nginx:
+    restart: always
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - .:/app
+      - ./compose/nginx:/etc/nginx/conf.d/
+    links:
+      - web:web
+      - centrifugo:centrifugo
+
+  centrifugo:
+    restart: always
+    image: fzambia/centrifugo:latest
+    command: centrifugo -c config.json
+    expose:
+      - "8090"
+    links:
+      - redis:redis
+    volumes:
+      - ./compose/centrifugo/config.json:/centrifugo/config.json
+
+  redis:
+    restart: always
+    image: redis:latest
+    expose:
+      - "6379"
+    volumes:
+      - redisdata:/data
