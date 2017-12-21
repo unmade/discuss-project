@@ -1,5 +1,7 @@
 # Comment Service
 
+![Travis CI](https://travis-ci.org/unmade/discuss-project.svg?branch=master)
+
 Simple comment service to externally hosts comments posted by users.
 
 It features:
