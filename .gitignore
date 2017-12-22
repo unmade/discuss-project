@@ -5,3 +5,4 @@
 coverage.xml
 .env
 discuss_dump
+staticfiles/

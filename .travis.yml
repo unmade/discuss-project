@@ -1,3 +1,7 @@
+language: python
+python:
+  - "3.6"
+
 sudo: required
 dist: trusty
 
@@ -13,11 +17,20 @@ before_install:
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
 
+install:
+  - pip install python-coveralls
+  - pip install coverage==4.4.2
+
 before_script:
   - docker-compose -f docker-compose.yml -f docker-compose.test.yml build db test
 
 script:
-  - docker-compose -f docker-compose.yml -f docker-compose.test.yml run test; exit $?
+  - docker-compose -f docker-compose.yml -f docker-compose.test.yml run test; [ "$?" -eq 0 ] || exit $?
 
 after_script:
   - docker-compose down
+
+after_success:
+  - mv .coverage .coverage.travis
+  - coverage combine --append
+  - coveralls
