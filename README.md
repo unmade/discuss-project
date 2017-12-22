@@ -1,6 +1,7 @@
 # Comment Service
 
 ![Travis CI](https://travis-ci.org/unmade/discuss-project.svg?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/unmade/discuss-project/badge.svg?branch=master)](https://coveralls.io/github/unmade/discuss-project?branch=master)
 
 Simple comment service to externally hosts comments posted by users.
 
